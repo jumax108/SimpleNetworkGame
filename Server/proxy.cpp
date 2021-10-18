@@ -32,7 +32,7 @@ bool CProxy::CS_MoveStartProxy(stUser* user, CProtocolBuffer* protocolBuffer) {
 
 	{
 		// 오차가 크면 싱크를 맞추자
-		syncProc(user, userX, userY);
+		//syncProc(user, userX, userY);
 	}
 
 	userX = user->x;
@@ -276,6 +276,7 @@ void CProxy::syncProc(stUser* user, short x, short y) {
 	CProtocolBuffer packet(50);
 	packetMake->SC_SyncStub(&packet, userId, userX, userY);
 
+	/*
 	int sectorY = user->sectorY;
 	int sectorX = user->sectorX;
 	CSingleSector* sector = sectorList->getSector(sectorY, sectorX);
@@ -289,8 +290,38 @@ void CProxy::syncProc(stUser* user, short x, short y) {
 		network->broadCast<std::unordered_set<int>::iterator, CUserList> (sector->userListBegin(), sector->userListEnd(), nullptr, &packet, *userList);
 
 	}
-
+	*/
 	// 싱크를 맞춰서 섹터가 변경될 수도 있음
 	sectorLogic(user);
 
+}
+
+bool CProxy::CS_Tp(stUser* user, CProtocolBuffer* protocolBuffer) {
+
+	int id;
+	short x;
+	short y;
+
+	*protocolBuffer >> id;
+	*protocolBuffer >> x;
+	*protocolBuffer >> y;
+
+	CProtocolBuffer packet(50);
+	packetMake->SC_SyncStub(&packet, id, x, y);
+
+	stUser* destUser = userList->getUser(id);
+	destUser->y = y;
+	destUser->x = x;
+	network->uniCast(destUser, &packet);
+
+	// 강제 이동해서 섹터 변경될 수 있음
+	sectorLogic(destUser);
+
+	return true;
+}
+
+bool CProxy::CS_KillUser(stUser* user, CProtocolBuffer* protocolBuffer) {
+	int id;
+	*protocolBuffer >> id;
+	return true;
 }

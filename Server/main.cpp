@@ -182,7 +182,7 @@ void logic() {
 		//printf("y: %d, x: %d, dir: %d\n", user->y, user->x, user->dir);
 		switch (user->dir) {
 			case MOVE_DIR::NONE: {
-				return;
+				break;
 			}
 			case MOVE_DIR::MOVE_DIR_LL: {
 				if (user->x >= MOVE_X_SPEED) {
@@ -285,7 +285,7 @@ void sectorLogic(stUser* user) {
 
 			for (std::vector<CSingleSector*>::iterator sectorIter = oldNearSectorList->begin(); sectorIter != oldNearSectorList->end(); ++sectorIter) {
 				CSingleSector* sector = *sectorIter;
-				network->broadCast<std::unordered_set<int>::iterator, CUserList>(sector->userListBegin(), sector->userListEnd(), nullptr, &packet, *userList);
+				network->broadCast<std::unordered_set<int>::iterator, CUserList>(sector->userListBegin(), sector->userListEnd(), user, &packet, *userList);
 			}
 		}
 
@@ -316,7 +316,7 @@ void sectorLogic(stUser* user) {
 
 			for (std::vector<CSingleSector*>::iterator sectorIter = newNearSectorList->begin(); sectorIter != newNearSectorList->end(); ++sectorIter) {
 				CSingleSector* sector = *sectorIter;
-				network->broadCast<std::unordered_set<int>::iterator, CUserList>(sector->userListBegin(), sector->userListEnd(), nullptr, &packet, *userList);
+				network->broadCast<std::unordered_set<int>::iterator, CUserList>(sector->userListBegin(), sector->userListEnd(), user, &packet, *userList);
 			}
 		}
 
@@ -328,6 +328,11 @@ void sectorLogic(stUser* user) {
 
 				for (std::unordered_set<int>::iterator userIter = sector->userListBegin(); userIter != sector->userListEnd(); ++userIter) {
 					int id = *userIter;
+
+					if (id == user->id) {
+						continue;
+					}
+
 					stUser* otherUser = userList->getUser(id);
 
 					CProtocolBuffer packet(50);
@@ -375,7 +380,7 @@ void sectorLogic(stUser* user) {
 
 			for (std::vector<CSingleSector*>::iterator sectorIter = newNearSectorList->begin(); sectorIter != newNearSectorList->end(); ++sectorIter) {
 				CSingleSector* sector = *sectorIter;
-				network->broadCast<std::unordered_set<int>::iterator, CUserList>(sector->userListBegin(), sector->userListEnd(), nullptr, &packet, *userList);
+				network->broadCast<std::unordered_set<int>::iterator, CUserList>(sector->userListBegin(), sector->userListEnd(), user, &packet, *userList);
 			}
 
 		} while (false);
