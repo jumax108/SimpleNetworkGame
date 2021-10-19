@@ -126,7 +126,7 @@ void recvLogic() {
 
 		recvBuffer->moveFront(sizeof(stHeader));
 
-		CProtocolBuffer payload(50);
+		CProtocolBuffer payload(header.payloadSize);
 		recvBuffer->front(header.payloadSize, payload.getRearPtr());
 		payload.moveRear(header.payloadSize);
 		recvBuffer->moveFront(header.payloadSize);

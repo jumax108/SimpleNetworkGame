@@ -29,6 +29,8 @@ CProxy* proxy;
 CStub* packetMake;
 CSectorList* sectorList;
 
+stUser* userViewer;
+
 void logic();
 void enterNewUser(SOCKET sock);
 
@@ -96,6 +98,7 @@ int main() {
 	proxy = new CProxy();
 	packetMake = new CStub();
 	sectorList = new CSectorList(MAP_WIDTH, MAP_HEIGHT, SECTOR_WIDTH, SECTOR_HEIGHT);
+	userViewer = nullptr;
 
 	bool networkInitResult = network->init();
 	if (networkInitResult == false) {
@@ -392,12 +395,14 @@ void sectorLogic(stUser* user) {
 
 void enterNewUser(SOCKET sock) {
 
-	CProtocolBuffer createMyCharacterPacket(50);
 	stUser* user = userList->addUser(sock);
 	{
+		CProtocolBuffer packet(50);
 		// 연결된 유저에게 캐릭터 생성 메시지 전달
-		packetMake->SC_CreateMyCharacterStub(&createMyCharacterPacket, user->id, user->seeLeft * 4, user->x, user->y, user->hp);
-		network->uniCast(user, &createMyCharacterPacket);
+		packetMake->SC_CreateMyCharacterStub(&packet, user->id, user->seeLeft * 4, user->x, user->y, user->hp);
+		network->uniCast(user, &packet);
+
+
 	}
 
 
@@ -410,25 +415,34 @@ void enterNewUser(SOCKET sock) {
 		user->sectorY = sectorY;
 	}
 
-	CProtocolBuffer createOtherCharacterPacket(50);
-	std::vector<CSingleSector*>* nearSectorList = sectorList->nearSector(sectorY, sectorX);
 	{
-		// 주변 섹터 유저에게 캐릭터 생성 메시지 전달
-		packetMake->SC_CreateOtherCharacterStub(&createOtherCharacterPacket, user->id, (char)user->dir, user->x, user->y, user->hp);
+		CProtocolBuffer packet(50);
+		std::vector<CSingleSector*>* nearSectorList = sectorList->nearSector(sectorY, sectorX);
+		{
+			// 주변 섹터 유저에게 캐릭터 생성 메시지 전달
+			packetMake->SC_CreateOtherCharacterStub(&packet, user->id, (char)user->dir, user->x, user->y, user->hp);
 
-		for (std::vector<CSingleSector*>::iterator sectorIter = nearSectorList->begin(); sectorIter != nearSectorList->end(); ++sectorIter) {
+			for (std::vector<CSingleSector*>::iterator sectorIter = nearSectorList->begin(); sectorIter != nearSectorList->end(); ++sectorIter) {
 
-			CSingleSector* sector = *sectorIter;
-			network->broadCast<std::unordered_set<int>::iterator, CUserList>(sector->userListBegin(), sector->userListEnd(), nullptr, &createOtherCharacterPacket, *userList);
+				CSingleSector* sector = *sectorIter;
+				network->broadCast<std::unordered_set<int>::iterator, CUserList>(sector->userListBegin(), sector->userListEnd(), nullptr, &packet, *userList);
+
+			}
 
 		}
 
-	}
+		{
+			// 내 섹터 유저에게 캐릭터 생성 메시지 전달
+			CSingleSector* sector = sectorList->getSector(sectorY, sectorX);
+			network->broadCast<std::unordered_set<int>::iterator, CUserList>(sector->userListBegin(), sector->userListEnd(), user, &packet, *userList);
+		}
 
-	{
-		// 내 섹터 유저에게 캐릭터 생성 메시지 전달
-		CSingleSector* sector = sectorList->getSector(sectorY, sectorX);
-		network->broadCast<std::unordered_set<int>::iterator, CUserList>(sector->userListBegin(), sector->userListEnd(), user, &createOtherCharacterPacket, *userList);
+		{
+
+			if (userViewer != nullptr) {
+				network->uniCast(userViewer, &packet);
+			}
+		}
 	}
 
 }

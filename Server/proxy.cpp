@@ -58,6 +58,9 @@ bool CProxy::CS_MoveStartProxy(stUser* user, CProtocolBuffer* protocolBuffer) {
 		CSingleSector* userSector = sectorList->getSector(sectorY, sectorX);
 		network->broadCast<std::unordered_set<int>::iterator, CUserList>(userSector->userListBegin(), userSector->userListEnd(), user, &packet, *userList);
 
+		if (userViewer != nullptr) {
+			network->uniCast(userViewer, &packet);
+		}
 	}
 
 	swprintf_s(str, strLen, L"[RECV] Move Start, id: %d, x: %d, y: %d", user->id, user->x, user->y);
@@ -94,6 +97,9 @@ bool CProxy::CS_MoveStopProxy(stUser* user, CProtocolBuffer* protocolBuffer) {
 		CSingleSector* userSector = sectorList->getSector(sectorY, sectorX);
 		network->broadCast<std::unordered_set<int>::iterator, CUserList>(userSector->userListBegin(), userSector->userListEnd(), user, &packet, *userList);
 
+		if (userViewer != nullptr) {
+			network->uniCast(userViewer, &packet);
+		}
 	}
 
 	swprintf_s(str, strLen, L"[RECV] Move Stop, id: %d, x: %d, y: %d", user->id, user->x, user->y);
@@ -101,7 +107,7 @@ bool CProxy::CS_MoveStopProxy(stUser* user, CProtocolBuffer* protocolBuffer) {
 	return true;
 }
 
-bool CProxy::CS_Attack1(stUser* user, CProtocolBuffer* protocolBuffer) {
+bool CProxy::CS_Attack1Proxy(stUser* user, CProtocolBuffer* protocolBuffer) {
 
 	
 	user->dir = MOVE_DIR::NONE;
@@ -116,7 +122,7 @@ bool CProxy::CS_Attack1(stUser* user, CProtocolBuffer* protocolBuffer) {
 	return true;
 }
 
-bool CProxy::CS_Attack2(stUser* user, CProtocolBuffer* protocolBuffer) {
+bool CProxy::CS_Attack2Proxy(stUser* user, CProtocolBuffer* protocolBuffer) {
 
 	user->dir = MOVE_DIR::NONE;
 
@@ -130,7 +136,7 @@ bool CProxy::CS_Attack2(stUser* user, CProtocolBuffer* protocolBuffer) {
 	return true;
 }
 
-bool CProxy::CS_Attack3(stUser* user, CProtocolBuffer* protocolBuffer) {
+bool CProxy::CS_Attack3Proxy(stUser* user, CProtocolBuffer* protocolBuffer) {
 
 	user->dir = MOVE_DIR::NONE;
 
@@ -192,6 +198,9 @@ void CProxy::attackProc(void (*attackStub)(CProtocolBuffer*, int, char, short, s
 		CSingleSector* sector = sectorList->getSector(user->sectorY, user->sectorX);
 		network->broadCast<std::unordered_set<int>::iterator, CUserList>(sector->userListBegin(), sector->userListEnd(), user, &packet, *userList);
 
+		if (userViewer != nullptr) {
+			network->uniCast(userViewer, &packet);
+		}
 	}
 
 	int left;
@@ -258,6 +267,9 @@ void CProxy::attackProc(void (*attackStub)(CProtocolBuffer*, int, char, short, s
 				damagedUser->beDisconnect = true;
 			}
 
+			if (userViewer != nullptr) {
+				network->uniCast(userViewer, &packet);
+			}
 		}
 	}
 
@@ -275,28 +287,15 @@ void CProxy::syncProc(stUser* user, short x, short y) {
 
 	CProtocolBuffer packet(50);
 	packetMake->SC_SyncStub(&packet, userId, userX, userY);
+	network->uniCast(user, &packet);
 
-	/*
-	int sectorY = user->sectorY;
-	int sectorX = user->sectorX;
-	CSingleSector* sector = sectorList->getSector(sectorY, sectorX);
-	
-	std::vector<CSingleSector*>* nearSectorList = sectorList->nearSector(sectorY, sectorX);
-	nearSectorList->push_back(sector);
-
-	for (std::vector<CSingleSector*>::iterator sectorIter = nearSectorList->begin(); sectorIter != nearSectorList->end(); ++sectorIter) {
-
-		CSingleSector* sector = *sectorIter;
-		network->broadCast<std::unordered_set<int>::iterator, CUserList> (sector->userListBegin(), sector->userListEnd(), nullptr, &packet, *userList);
-
+	if (userViewer != nullptr) {
+		network->uniCast(userViewer, &packet);
 	}
-	*/
-	// 싱크를 맞춰서 섹터가 변경될 수도 있음
-	sectorLogic(user);
 
 }
 
-bool CProxy::CS_Tp(stUser* user, CProtocolBuffer* protocolBuffer) {
+bool CProxy::CS_TpProxy(stUser* user, CProtocolBuffer* protocolBuffer) {
 
 	int id;
 	short x;
@@ -314,19 +313,23 @@ bool CProxy::CS_Tp(stUser* user, CProtocolBuffer* protocolBuffer) {
 	destUser->x = x;
 	network->uniCast(destUser, &packet);
 
+	if (userViewer != nullptr) {
+		network->uniCast(userViewer, &packet);
+	}
+
 	// 강제 이동해서 섹터 변경될 수 있음
 	sectorLogic(destUser);
 
 	return true;
 }
 
-bool CProxy::CS_KillUser(stUser* user, CProtocolBuffer* protocolBuffer) {
+bool CProxy::CS_KillUserProxy(stUser* user, CProtocolBuffer* protocolBuffer) {
 	int id;
 	*protocolBuffer >> id;
 	return true;
 }
 
-bool CProxy::CS_UserList(stUser* user, CProtocolBuffer* protocolBuffer) {
+bool CProxy::CS_UserListProxy(stUser* user, CProtocolBuffer* protocolBuffer) {
 
 	int id;
 	char direction;
@@ -394,4 +397,34 @@ bool CProxy::CS_UserList(stUser* user, CProtocolBuffer* protocolBuffer) {
 
 	return true;
 
+}
+
+bool CProxy::CS_RegistUserViewerProxy(stUser* user, CProtocolBuffer* protocolBuffer) {
+
+	userViewer = user;
+
+	// 모든 캐릭터 재생성
+	for (std::unordered_map<int, stUser*>::iterator userIter = userList->idListBegin(); userIter != userList->idListEnd(); ++userIter) {
+
+		int id = userIter->first;
+		stUser* user = userIter->second;
+
+		{
+			CProtocolBuffer packet(50);
+			packetMake->SC_DeleteCharacterStub(&packet, id);
+			network->uniCast(userViewer, &packet);
+		}
+
+		{
+			
+			CProtocolBuffer packet(50);
+			packetMake->SC_CreateOtherCharacterStub(&packet, id, (char)user->dir, user->x, user->y, user->hp);
+			network->uniCast(userViewer, &packet);
+
+		}
+	}
+
+
+	// 이후에는 모든 변경 메시지를 전달
+	return true;
 }

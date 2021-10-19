@@ -18,6 +18,7 @@
 #include "user.h"
 #include "proxy.h"
 #include "sector.h"
+#include "stub.h"
 #include "network.h"
 
 constexpr int strLen = 1000;
@@ -267,22 +268,25 @@ void CNetwork::packetProcess(stUser* user) {
 			proxy->CS_MoveStopProxy(user, &protocolBuffer);
 			break;
 		case CS_Attack1:
-			proxy->CS_Attack1(user, &protocolBuffer);
+			proxy->CS_Attack1Proxy(user, &protocolBuffer);
 			break;
 		case CS_Attack2:
-			proxy->CS_Attack2(user, &protocolBuffer);
+			proxy->CS_Attack2Proxy(user, &protocolBuffer);
 			break;
 		case CS_Attack3:
-			proxy->CS_Attack3(user, &protocolBuffer);
+			proxy->CS_Attack3Proxy(user, &protocolBuffer);
 			break;
 		case CS_Tp:
-			proxy->CS_Tp(user, &protocolBuffer);
+			proxy->CS_TpProxy(user, &protocolBuffer);
 			break;
 		case CS_KillUser:
-			proxy->CS_KillUser(user, &protocolBuffer);
+			proxy->CS_KillUserProxy(user, &protocolBuffer);
 			break;
 		case CS_UserList:
-			proxy->CS_UserList(user, &protocolBuffer);
+			proxy->CS_UserListProxy(user, &protocolBuffer);
+			break;
+		case CS_RegistUserViewer:
+			proxy->CS_RegistUserViewerProxy(user, &protocolBuffer);
 			break;
 		}
 
@@ -322,10 +326,30 @@ void CNetwork::uniCast(stUser* user, CProtocolBuffer* buffer) {
 
 void CNetwork::disconnectUser(stUser* user) {
 
-	closesocket(user->sock);
+	int id = user->id;
+	int userSectorY = user->sectorY;
+	int userSectorX = user->sectorX;
+
+	CSingleSector* userSector = sectorList->getSector(userSectorY, userSectorX);
+	std::vector<CSingleSector*>* nearSectorList = sectorList->nearSector(userSectorY, userSectorX);
+
+	CProtocolBuffer packet(50);
+	packetMake->SC_DeleteCharacterStub(&packet, id);
+
+	broadCast<std::unordered_set<int>::iterator, CUserList>(userSector->userListBegin(), userSector->userListEnd(), nullptr, &packet, *userList);
+	for (std::vector<CSingleSector*>::iterator sectorIter = nearSectorList->begin(); sectorIter != nearSectorList->end(); ++sectorIter) {
+		CSingleSector* sector = *sectorIter;
+		broadCast<std::unordered_set<int>::iterator, CUserList>(sector->userListBegin(), sector->userListEnd(), nullptr, &packet, *userList);
+	}
+
+	if (userViewer != nullptr) {
+		uniCast(userViewer, &packet);
+	}
 
 	userList->eraseUser(user->id);
+	userSector->eraseUser(user->id);
 
-	sectorList->getSector(user->sectorY, user->sectorX)->eraseUser(user->id);
+
+	closesocket(user->sock);
 
 }

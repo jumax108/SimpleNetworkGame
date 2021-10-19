@@ -121,6 +121,9 @@ struct stSC_UserList {
 	short* x;
 	short* y;
 };
+struct stCS_RegistUserViewer {
+	int id;
+};
 #pragma pack()
 
 constexpr unsigned int SC_CreateMyCharacter = 0;
@@ -141,6 +144,7 @@ constexpr unsigned int CS_Tp = 100;
 constexpr unsigned int CS_KillUser = 101;
 constexpr unsigned int CS_UserList = 102;
 constexpr unsigned int SC_UserList = 103;
+constexpr unsigned int CS_RegistUserViewer = 104;
 constexpr unsigned int SC_Sync = 251;
 
 enum class MOVE_DIR {

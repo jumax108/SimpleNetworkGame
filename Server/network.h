@@ -4,11 +4,13 @@ struct stUser;
 class CUserList;
 class CProxy;
 class CSectorList;
+class CStub;
 
 extern CLogger* logger;
 extern CUserList* userList;
 extern CProxy* proxy;
 extern CSectorList* sectorList;
+extern CStub* packetMake;
 
 class CNetwork {
 
