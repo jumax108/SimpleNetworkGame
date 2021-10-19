@@ -6,6 +6,8 @@
 #include <WS2tcpip.h>
 #pragma comment(lib, "ws2_32")
 
+#include <locale>
+
 #include <vector>
 
 #include "common.h"
@@ -22,6 +24,8 @@ void networkInit();
 
 CRingBuffer* recvBuffer;
 CStub stub;
+
+bool recvEnd;
 
 std::vector<wchar_t*>* split(wchar_t* str) {
 
@@ -72,12 +76,44 @@ void packetProc(stHeader* header, CProtocolBuffer* payload) {
 			send(sock, packet.getFrontPtr(), packet.getUsedSize(), 0);
 			break;
 		}
+		case SC_UserList: {
+			int num;
+			*payload >> num;
+
+			int* idArr = new int[num];
+			char* dirArr = new char[num];
+			short* xArr = new short[num];
+			short* yArr = new short[num];
+
+			for (int idx = 0; idx < num; ++idx) {
+				*payload >> idArr[idx];
+				*payload >> dirArr[idx];
+				*payload >> xArr[idx];
+				*payload >> yArr[idx];
+			}
+
+			wprintf(L"-------------------------\n");
+			for (int idx = 0; idx < num; ++idx) {
+				wprintf(L"id: %d, dir: %d, x: %d, y: %d\n", idArr[idx], dirArr[idx], xArr[idx], yArr[idx]);
+			}
+			wprintf(L"-------------------------\n");
+
+			delete[] idArr;
+			delete[] dirArr;
+			delete[] xArr;
+			delete[] yArr;
+
+			recvEnd = true;
+
+			break;
+		}
 	}
 }
 
 void recvLogic() {
 	
 	int num = recv(sock, recvBuffer->getDirectPush(), recvBuffer->getDirectFreeSize(), 0);
+	recvBuffer->moveRear(num);
 
 	while (recvBuffer->getUsedSize() > 3) {
 
@@ -103,6 +139,8 @@ void recvLogic() {
 
 int main() {
 
+	setlocale(LC_ALL, "");
+
 	recvBuffer = new CRingBuffer(5000);
 
 	networkInit();
@@ -123,7 +161,19 @@ int main() {
 		}
 		else if (wcscmp(cmdWord->at(0), L"tp") == 0) {
 
+			if (cmdWord->size() < 4) {
+				wprintf(L"-------------------------\n");
+				wprintf(L"tp [id] [x] [y]\n");
+				wprintf(L"-------------------------\n");
+				continue;
+			}
+
 			int id = _wcstoi64(cmdWord->at(1), nullptr, 10);
+
+			if (id == 0) {
+				continue;
+			}
+
 			short x = _wcstoi64(cmdWord->at(2), nullptr, 10);
 			short y = _wcstoi64(cmdWord->at(3), nullptr, 10);
 
@@ -134,7 +184,42 @@ int main() {
 			wprintf(L"%d\n", WSAGetLastError());
 
 		}
+		else if (wcscmp(cmdWord->at(0), L"userlist") == 0) {
+			if (cmdWord->size() < 7) {
+				wprintf(L"-------------------------\n");
+				wprintf(L"userlist [id] [direction] [left] [top] [right] [bottom]\n");
+				wprintf(L"각 조건에 해당하는 유저 리스트가 출력됨\n-100 입력하면 해당 조건은 무시함\n");
+				wprintf(L"-------------------------\n");
+				continue;
+			}
 
+			int id = _wcstoi64(cmdWord->at(1), nullptr, 10);
+			char direction = _wcstoi64(cmdWord->at(2), nullptr, 10);
+			short left = _wcstoi64(cmdWord->at(3), nullptr, 10);
+			short top = _wcstoi64(cmdWord->at(4), nullptr, 10);
+			short right = _wcstoi64(cmdWord->at(5), nullptr, 10);
+			short bottom = _wcstoi64(cmdWord->at(6), nullptr, 10);
+
+			CProtocolBuffer packet(50);
+			stub.CS_UserListStub(&packet, id, direction, left, top, right, bottom);
+
+			send(sock, packet.getFrontPtr(), packet.getUsedSize(), 0);
+			wprintf(L"%d\n", WSAGetLastError());
+
+			recvEnd = false;
+			while (recvEnd == false) {
+				recvLogic();
+			}
+
+		}
+		else if (wcscmp(cmdWord->at(0), L"clear") == 0) {
+			system("cls");
+		}
+
+		for (std::vector<wchar_t*>::iterator iter = cmdWord->begin(); iter != cmdWord->end(); ++iter) {
+			delete* iter;
+		}
+		cmdWord->clear();
 
 	}
 

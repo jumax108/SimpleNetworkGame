@@ -281,6 +281,9 @@ void CNetwork::packetProcess(stUser* user) {
 		case CS_KillUser:
 			proxy->CS_KillUser(user, &protocolBuffer);
 			break;
+		case CS_UserList:
+			proxy->CS_UserList(user, &protocolBuffer);
+			break;
 		}
 
 	}

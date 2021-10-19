@@ -20,6 +20,7 @@ public:
 	static void SC_Attack3Stub(CProtocolBuffer* buffer, int id, char direction, short x, short y);
 	void SC_DamageStub(CProtocolBuffer* buffer, int attackId, int damageId, char damageHp);
 	void SC_SyncStub(CProtocolBuffer* protocolBuffer, int id, short x, short y);
+	void SC_UserListStub(CProtocolBuffer* protocolBuffer, int num, int* idArr, char* dirArr, short* xArr, short* yArr);
 
 private:
 

@@ -23,6 +23,7 @@ public:
 	bool CS_Attack3(stUser* user, CProtocolBuffer* protocolBuffer);
 	bool CS_Tp(stUser* user, CProtocolBuffer* protocolBuffer);
 	bool CS_KillUser(stUser* user, CProtocolBuffer* protocolBuffer);
+	bool CS_UserList(stUser* user, CProtocolBuffer* protocolBuffer);
 
 private:
 	void attackProc(void (*attackStub)(CProtocolBuffer*, int, char, short, short), const int attackRangeX, const int attackRangeY, const int damage, stUser* user);

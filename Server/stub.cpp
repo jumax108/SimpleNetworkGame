@@ -156,3 +156,19 @@ void CStub::SC_SyncStub(CProtocolBuffer* buffer, int id, short x, short y){
 	*buffer << y;
 
 }
+
+void CStub::SC_UserListStub(CProtocolBuffer* buffer, int num, int* idArr, char* dirArr, short* xArr, short* yArr) {
+
+	*buffer << (char)0x89;
+	*buffer << (char)(sizeof(int) + (sizeof(int) + sizeof(char) + sizeof(short) + sizeof(short)) * num);
+	*buffer << (char)SC_UserList;
+
+	*buffer << num;
+	for (int idx = 0; idx < num; ++idx) {
+		*buffer << idArr[idx];
+		*buffer << dirArr[idx];
+		*buffer << xArr[idx];
+		*buffer << yArr[idx];
+	}
+
+}

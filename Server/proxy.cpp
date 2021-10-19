@@ -325,3 +325,73 @@ bool CProxy::CS_KillUser(stUser* user, CProtocolBuffer* protocolBuffer) {
 	*protocolBuffer >> id;
 	return true;
 }
+
+bool CProxy::CS_UserList(stUser* user, CProtocolBuffer* protocolBuffer) {
+
+	int id;
+	char direction;
+	short left;
+	short top;
+	short right;
+	short bottom;
+
+	*protocolBuffer >> id;
+	*protocolBuffer >> direction;
+	*protocolBuffer >> left;
+	*protocolBuffer >> top;
+	*protocolBuffer >> right;
+	*protocolBuffer >> bottom;
+
+	std::vector<stUser*> correctUser;
+
+	for (std::unordered_map<int, stUser*>::iterator userIter = userList->idListBegin(); userIter != userList->idListEnd(); ++userIter) {
+		stUser* user = userIter->second;
+
+		int conditionNum = 0;
+
+		if (id == -100 || id == user->id) {
+			conditionNum += 1;
+		}
+
+		if (direction == -100 || direction == (char)user->dir) {
+			conditionNum += 1;
+		}
+
+		if (left == -100 || (left <= user->x && user->x < right && top <= user->y && user->y < bottom) ) {
+			conditionNum += 1;
+		}
+
+		if (conditionNum == 3) {
+			correctUser.push_back(user);
+		}
+
+	}
+
+	int arrSize = correctUser.size();
+	int* idArr = new int[arrSize];
+	char* dirArr = new char[arrSize];
+	short* xArr = new short[arrSize];
+	short* yArr = new short[arrSize];
+
+	int idx = 0;
+	for (std::vector<stUser*>::iterator userIter = correctUser.begin(); userIter != correctUser.end(); ++userIter) {
+		stUser* user = *userIter;
+		idArr[idx] = user->id;
+		dirArr[idx] = (char)user->dir;
+		xArr[idx] = user->x;
+		yArr[idx] = user->y;
+		++idx;
+	}
+
+	CProtocolBuffer packet(1000);
+	packetMake->SC_UserListStub(&packet, arrSize, idArr, dirArr, xArr, yArr);
+	network->uniCast(user, &packet);
+
+	delete[] idArr;
+	delete[] dirArr;
+	delete[] xArr;
+	delete[] yArr;
+
+	return true;
+
+}

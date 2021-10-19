@@ -35,3 +35,18 @@ void CStub::CS_KillStub(CProtocolBuffer* buffer, int id) {
 
 	*buffer << id;
 }
+
+void CStub::CS_UserListStub(CProtocolBuffer* buffer, int id, char direction, short left, short top, short right, short bottom) {
+
+	*buffer << (char)0x89;
+	*buffer << (char)sizeof(stCS_UserList);
+	*buffer << (char)CS_UserList;
+
+	*buffer << id;
+	*buffer << direction;
+	*buffer << left;
+	*buffer << top;
+	*buffer << right;
+	*buffer << bottom;
+
+}

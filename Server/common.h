@@ -106,8 +106,23 @@ struct stCS_Tp {
 struct stCS_KillUser {
 	int id;
 };
-
+struct stCS_UserList {
+	int id;
+	char direction;
+	short left;
+	short top;
+	short right;
+	short bottom;
+};
+struct stSC_UserList {
+	int num;
+	int* id;
+	char* direction;
+	short* x;
+	short* y;
+};
 #pragma pack()
+
 constexpr unsigned int SC_CreateMyCharacter = 0;
 constexpr unsigned int SC_CreateOtherCharacter = 1;
 constexpr unsigned int SC_DeleteCharacter = 2;
@@ -124,8 +139,9 @@ constexpr unsigned int SC_Attack3 = 25;
 constexpr unsigned int SC_Damage = 30;
 constexpr unsigned int CS_Tp = 100;
 constexpr unsigned int CS_KillUser = 101;
+constexpr unsigned int CS_UserList = 102;
+constexpr unsigned int SC_UserList = 103;
 constexpr unsigned int SC_Sync = 251;
-
 
 enum class MOVE_DIR {
 	NONE = -1,
