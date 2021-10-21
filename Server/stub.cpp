@@ -172,3 +172,12 @@ void CStub::SC_UserListStub(CProtocolBuffer* buffer, int num, int* idArr, char* 
 	}
 
 }
+
+void CStub::SC_EchoStub(CProtocolBuffer* buffer, int time) {
+
+	*buffer << (char)0x89;
+	*buffer << (char)sizeof(stSC_Echo);
+	*buffer << (char)SC_Echo;
+
+	*buffer << time;
+}

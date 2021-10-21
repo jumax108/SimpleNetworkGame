@@ -27,6 +27,7 @@ public:
 	bool CS_KillUserProxy(stUser* user, CProtocolBuffer* protocolBuffer);
 	bool CS_UserListProxy(stUser* user, CProtocolBuffer* protocolBuffer);
 	bool CS_RegistUserViewerProxy(stUser* user, CProtocolBuffer* protocolBuffer);
+	bool CS_EchoProxy(stUser* user, CProtocolBuffer* protocolBuffer);
 
 private:
 	void attackProc(void (*attackStub)(CProtocolBuffer*, int, char, short, short), const int attackRangeX, const int attackRangeY, const int damage, stUser* user);

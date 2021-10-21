@@ -72,14 +72,14 @@ void otherUserUpdate(CSprite* sprite, void* argv) {
     do {
         switch (*(INPUT_MESSAGE*)argv) {
         case INPUT_MESSAGE::MOVE_DD:
-            if (sprite->_y + 2 < 470)
+            if (sprite->_y + 2 < MAP_HEIGHT)
                 sprite->_y += 2;
             if (sprite->_oldMsg != sprite->_msg) {
                 sprite->setAnimation(2);
             }
             break;
         case INPUT_MESSAGE::MOVE_LD:
-            if (sprite->_y + 2 < 470 && sprite->_x - 3 > 10) {
+            if (sprite->_y + 2 < MAP_HEIGHT && sprite->_x - 3 > 0) {
                 sprite->_y += 2;
                 sprite->_x -= 3;
             }
@@ -89,7 +89,7 @@ void otherUserUpdate(CSprite* sprite, void* argv) {
             }
             break;
         case INPUT_MESSAGE::MOVE_LL:
-            if (sprite->_x - 3 > 10)
+            if (sprite->_x - 3 > 0)
                 sprite->_x -= 3;
             sprite->_seeRight = false;
             if (sprite->_oldMsg != sprite->_msg) {
@@ -97,7 +97,7 @@ void otherUserUpdate(CSprite* sprite, void* argv) {
             }
             break;
         case INPUT_MESSAGE::MOVE_LU:
-            if (sprite->_x - 3 > 10 && sprite->_y - 2 > 50) {
+            if (sprite->_x - 3 > 0 && sprite->_y - 2 > 0) {
                 sprite->_x -= 3;
                 sprite->_y -= 2;
             }
@@ -107,7 +107,7 @@ void otherUserUpdate(CSprite* sprite, void* argv) {
             }
             break;
         case INPUT_MESSAGE::MOVE_RD:
-            if (sprite->_x + 3 < 630 && sprite->_y + 2 < 470) {
+            if (sprite->_x + 3 < MAP_WIDTH && sprite->_y + 2 < MAP_HEIGHT) {
                 sprite->_x += 3;
                 sprite->_y += 2;
             }
@@ -117,7 +117,7 @@ void otherUserUpdate(CSprite* sprite, void* argv) {
             }
             break;
         case INPUT_MESSAGE::MOVE_RR:
-            if (sprite->_x + 3 < 630)
+            if (sprite->_x + 3 < MAP_WIDTH)
                 sprite->_x += 3;
             sprite->_seeRight = true;
             if (sprite->_oldMsg != sprite->_msg) {
@@ -125,7 +125,7 @@ void otherUserUpdate(CSprite* sprite, void* argv) {
             }
             break;
         case INPUT_MESSAGE::MOVE_RU:
-            if (sprite->_x + 3 < 630 && sprite->_y - 2 > 50) {
+            if (sprite->_x + 3 < MAP_WIDTH && sprite->_y - 2 > 0) {
                 sprite->_x += 3;
                 sprite->_y -= 2;
             }
@@ -135,7 +135,7 @@ void otherUserUpdate(CSprite* sprite, void* argv) {
             }
             break;
         case INPUT_MESSAGE::MOVE_UU:
-            if (sprite->_y - 2 > 50)
+            if (sprite->_y - 2 > 0)
                 sprite->_y -= 2;
             if (sprite->_oldMsg != sprite->_msg) {
                 sprite->setAnimation(2);

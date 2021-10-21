@@ -21,7 +21,7 @@ public:
 	void SC_DamageStub(CProtocolBuffer* buffer, int attackId, int damageId, char damageHp);
 	void SC_SyncStub(CProtocolBuffer* protocolBuffer, int id, short x, short y);
 	void SC_UserListStub(CProtocolBuffer* protocolBuffer, int num, int* idArr, char* dirArr, short* xArr, short* yArr);
-
+	void SC_EchoStub(CProtocolBuffer* protocolBuffer, int time);
 private:
 
 

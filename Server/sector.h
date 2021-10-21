@@ -9,8 +9,8 @@ public:
 	void addUser(int id);
 	void eraseUser(int id);
 
-	std::unordered_set<int>::iterator userListBegin() { return userList.begin(); }
-	std::unordered_set<int>::iterator userListEnd() { return userList.end(); }
+	__declspec(noinline) std::unordered_set<int>::iterator userListBegin() { return userList.begin(); }
+	__declspec(noinline) std::unordered_set<int>::iterator userListEnd() { return userList.end(); }
 
 private:
 	std::unordered_set<int> userList;

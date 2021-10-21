@@ -124,6 +124,12 @@ struct stSC_UserList {
 struct stCS_RegistUserViewer {
 	int id;
 };
+struct stCS_Echo {
+	int time;
+};
+struct stSC_Echo {
+	int time;
+};
 #pragma pack()
 
 constexpr unsigned int SC_CreateMyCharacter = 0;
@@ -146,6 +152,8 @@ constexpr unsigned int CS_UserList = 102;
 constexpr unsigned int SC_UserList = 103;
 constexpr unsigned int CS_RegistUserViewer = 104;
 constexpr unsigned int SC_Sync = 251;
+constexpr unsigned int CS_Echo = 252;
+constexpr unsigned int SC_Echo = 253;
 
 enum class MOVE_DIR {
 	NONE = -1,

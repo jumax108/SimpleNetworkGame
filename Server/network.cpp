@@ -288,6 +288,9 @@ void CNetwork::packetProcess(stUser* user) {
 		case CS_RegistUserViewer:
 			proxy->CS_RegistUserViewerProxy(user, &protocolBuffer);
 			break;
+		case CS_Echo:
+			proxy->CS_EchoProxy(user, &protocolBuffer);
+			break;
 		}
 
 	}

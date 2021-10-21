@@ -405,6 +405,13 @@ void enterNewUser(SOCKET sock) {
 
 	}
 
+	
+	{
+		// 유저에게 에코패킷 전송
+		CProtocolBuffer packet(50);
+		packetMake->SC_EchoStub(&packet, timeGetTime());
+		network->uniCast(user, &packet);
+	}
 
 	int sectorY, sectorX;
 	{

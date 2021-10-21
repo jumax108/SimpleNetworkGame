@@ -167,21 +167,55 @@ void CProxy::attackProc(void (*attackStub)(CProtocolBuffer*, int, char, short, s
 		rangeX[0] += attackRangeX;
 		rangeX[3] += attackRangeX;
 	}
+	
+	{
+		// 값이 맵 범위를 벗어나지 않도록 수정
+		for (int rangeCnt = 0; rangeCnt < 4; ++rangeCnt) {
+			rangeX[rangeCnt] = min(max(0, rangeX[rangeCnt]), MAP_WIDTH - 1);
+			rangeY[rangeCnt] = min(max(0, rangeY[rangeCnt]), MAP_HEIGHT - 1);
+		}
 
-	int* rangeXIter = rangeX;
-	int* rangeYIter = rangeY;
-	int* rangeXEnd = rangeX + 4;
+	}
 
+	// 공격 박스에 대한 좌표
+	int left;
+	int top;
+	int right;
+	int bottom;
+
+	if (user->seeLeft == true) {
+		left = rangeX[0];
+		top = rangeY[0];
+		right = rangeX[2];
+		bottom = rangeY[2];
+	}
+	else {
+		left = rangeX[1];
+		top = rangeY[1];
+		right = rangeX[3];
+		bottom = rangeY[3];
+	}
+
+	int sector1Y, sector1X;
+	int sector2Y, sector2X;
+	int sector3Y, sector3X;
+	int sector4Y, sector4X;
 	std::unordered_set<CSingleSector*> attackSectorList;
-	for (; rangeXIter != rangeXEnd; ++rangeXIter, ++rangeYIter) {
+	{
+		// 공격 박스가 겹치는 섹터 리스트 얻기
 
-		*rangeXIter = max(min(*rangeXIter, MAP_WIDTH), 0);
-		*rangeYIter = max(min(*rangeYIter, MAP_HEIGHT), 0);
 
-		int sectorX;
-		int sectorY;
-		sectorList->coordinateToIndex(*rangeYIter, *rangeXIter, &sectorY, &sectorX);
-		attackSectorList.insert(sectorList->getSector(sectorY, sectorX));
+		sectorList->coordinateToIndex(top, left, &sector1Y, &sector1X);
+		attackSectorList.insert(sectorList->getSector(sector1Y, sector1X));
+
+		sectorList->coordinateToIndex(top, right, &sector2Y, &sector2X);
+		attackSectorList.insert(sectorList->getSector(sector2Y, sector2X));
+
+		sectorList->coordinateToIndex(bottom, left, &sector3Y, &sector3X);
+		attackSectorList.insert(sectorList->getSector(sector3Y, sector3X));
+
+		sectorList->coordinateToIndex(bottom, right, &sector4Y, &sector4X);
+		attackSectorList.insert(sectorList->getSector(sector4Y, sector4X));
 	}
 
 	{
@@ -203,23 +237,6 @@ void CProxy::attackProc(void (*attackStub)(CProtocolBuffer*, int, char, short, s
 		}
 	}
 
-	int left;
-	int top;
-	int right;
-	int bottom;
-
-	if (user->seeLeft == true) {
-		left = rangeX[0];
-		top = rangeY[0];
-		right = rangeX[2];
-		bottom = rangeY[2];
-	}
-	else {
-		left = rangeX[1];
-		top = rangeY[1];
-		right = rangeX[3];
-		bottom = rangeY[3];
-	}
 
 	std::vector<stUser*> damagedUserList;
 	{
@@ -264,7 +281,7 @@ void CProxy::attackProc(void (*attackStub)(CProtocolBuffer*, int, char, short, s
 			network->broadCast<std::unordered_set<int>::iterator, CUserList>(sector->userListBegin(), sector->userListEnd(), nullptr, &packet, *userList);
 
 			if (damagedUser->hp <= 0) {
-				damagedUser->beDisconnect = true;
+				//damagedUser->beDisconnect = true;
 			}
 
 			if (userViewer != nullptr) {
@@ -293,6 +310,9 @@ void CProxy::syncProc(stUser* user, short x, short y) {
 		network->uniCast(userViewer, &packet);
 	}
 
+	swprintf_s(str, strLen, L"[RECV] Sync, id: id, x: %d, y: %d", userId, x, y);
+	logger->Logging(str, LOG_ALL);
+
 }
 
 bool CProxy::CS_TpProxy(stUser* user, CProtocolBuffer* protocolBuffer) {
@@ -319,6 +339,9 @@ bool CProxy::CS_TpProxy(stUser* user, CProtocolBuffer* protocolBuffer) {
 
 	// 강제 이동해서 섹터 변경될 수 있음
 	sectorLogic(destUser);
+
+	swprintf_s(str, strLen, L"[RECV] TP, targetId: %d, x: %d, y: %d", id, x, y);
+	logger->Logging(str, LOG_ALL);
 
 	return true;
 }
@@ -427,4 +450,23 @@ bool CProxy::CS_RegistUserViewerProxy(stUser* user, CProtocolBuffer* protocolBuf
 
 	// 이후에는 모든 변경 메시지를 전달
 	return true;
+}
+
+bool CProxy::CS_EchoProxy(stUser* user, CProtocolBuffer* buffer) {
+
+	int time;
+	*buffer >> time;
+
+	//wprintf(L"%d\n", time);
+
+	
+	//swprintf_s(str, strLen, L"[RECV] Echo, time: %d", time);
+	//logger->Logging(str, LOG_ALL);
+
+	CProtocolBuffer packet(50);
+	packetMake->SC_EchoStub(&packet, timeGetTime());
+	network->uniCast(user, &packet);
+	
+	return true;
+
 }
